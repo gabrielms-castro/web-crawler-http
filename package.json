@@ -20,5 +20,8 @@
   "homepage": "https://github.com/gabrielms-castro/web-crawler-http#readme",
   "devDependencies": {
     "jest": "^30.0.5"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0"
   }
 }
