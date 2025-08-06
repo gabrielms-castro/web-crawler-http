@@ -1,4 +1,4 @@
-const { normalizeURL, getURLfromHTML } = require('./crawl.js')
+const { normalizeURL, getURLFromHTML } = require('./crawl.js')
 const { test, expect } = require('@jest/globals')
 
 test(
@@ -42,7 +42,7 @@ test(
 );
 
 test(
-    'getURLfromHTML',
+    'getURLFromHTML',
     () => {
         const inputHTMLBody = `
 <html>
@@ -54,14 +54,14 @@ test(
 </html>
 `
         const inputBaseURL = 'https://blog.boot.dev';
-        const actual = getURLfromHTML(inputHTMLBody, inputBaseURL);
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/']
         expect(actual).toEqual(expected)
     }
 );
 
 test(
-    'getURLfromHTML relative',
+    'getURLFromHTML relative',
     () => {
         const inputHTMLBody = `
 <html>
@@ -73,14 +73,14 @@ test(
 </html>
 `
         const inputBaseURL = 'https://blog.boot.dev';
-        const actual = getURLfromHTML(inputHTMLBody, inputBaseURL);
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/path/']
         expect(actual).toEqual(expected)
     }
 );
 
 test(
-    'getURLfromHTML multiple URLs',
+    'getURLFromHTML multiple URLs',
     () => {
         const inputHTMLBody = `
 <html>
@@ -95,14 +95,14 @@ test(
 </html>
 `
         const inputBaseURL = 'https://blog.boot.dev';
-        const actual = getURLfromHTML(inputHTMLBody, inputBaseURL);
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/path1/', 'https://blog.boot.dev/path2/']
         expect(actual).toEqual(expected)
     }
 );
 
 test(
-    'getURLfromHTML multiple URLs',
+    'getURLFromHTML multiple URLs',
     () => {
         const inputHTMLBody = `
 <html>
@@ -114,7 +114,7 @@ test(
 </html>
 `
         const inputBaseURL = 'https://blog.boot.dev';
-        const actual = getURLfromHTML(inputHTMLBody, inputBaseURL);
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = []
         expect(actual).toEqual(expected)
     }
