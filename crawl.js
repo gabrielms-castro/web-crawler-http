@@ -6,7 +6,25 @@ function getURLfromHTML(htmlBody, baseURL) {
     const linkElements = dom.window.document.querySelectorAll('a');
 
     for (const linkElement of linkElements) {
-        urls.push(linkElement.href);
+        if (linkElement.href.slice(0,1) === '/') {
+            // relative URL
+            // URL object should throw and error if not valid. try/catch to handle it.
+            try {
+                const urlObj = new URL(`${baseURL}${linkElement.href}`);
+                urls.push(urlObj.href);
+            } catch (err) {
+                console.log(`Invalid Relative URL: ${err.message}`);
+            }
+        } else {
+            // absolulte URL
+            // URL object should throw and error if not valid. try/catch to handle it.
+            try {
+                const urlObj = new URL(linkElement.href);
+                urls.push(urlObj.href);
+            } catch (err) {
+                console.log(`Invalid Absolute URL: ${err.message}`);
+            }
+        }
     }
     return urls
 }
