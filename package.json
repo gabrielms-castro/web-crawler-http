@@ -4,7 +4,7 @@
   "description": "Basic project for learning HTTP in JavaScript",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "node --no-warnings main.js",
     "test": "jest"
   },
   "repository": {
