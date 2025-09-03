@@ -3,6 +3,7 @@ const { JSDOM } = require('jsdom')
 async function crawlPage(baseURL, currentURL, pages) {
     const baseURLObj = new URL(baseURL);
     const currentURLObj = new URL(currentURL);
+    
     if (baseURLObj.hostname !== currentURLObj.hostname) {
         return pages;
     }
@@ -17,7 +18,12 @@ async function crawlPage(baseURL, currentURL, pages) {
     console.log(`Crawling: ${currentURL}`);
     
     try {
-        const resp = await fetch(currentURL);
+        const resp = await fetch(currentURL,{
+            method: "GET",
+            headers: {
+                "User-Agent": "Mozilla/5.0"
+            }
+        });
         if (resp.status > 399) {
             console.log(`Error in fetch with status code ${resp.status} on page ${currentURL}`);
             return pages; 
@@ -31,43 +37,41 @@ async function crawlPage(baseURL, currentURL, pages) {
 
         const htmlBody = await resp.text();
         
-        const nextURLs = getURLFromHTML(htmlBody, baseURL)
+        const nextURLs = getURLFromHTML(htmlBody, currentURL)
         
         for (const nextURL of nextURLs) {
             pages = await crawlPage(baseURL, nextURL, pages);
         }
 
     } catch (err) {
-        console.log(`Error in fetch: ${err.message}, on page: ${currentURL}`);
+        console.log(resp.status)
+        console.log(`Error in fetch: ${err}, on page: ${currentURL}`);
     }
 
     return pages;
 }
 
 function getURLFromHTML(htmlBody, baseURL) {
+    // withBar: if true, return URLs with trailing slash; if false, return URLs without trailing slash
+
     const urls = [];
     const dom = new JSDOM(htmlBody);
     const linkElements = dom.window.document.querySelectorAll('a');
-
+    
     for (const linkElement of linkElements) {
-        if (linkElement.href.slice(0,1) === '/') {
-            // relative URL
-            // URL object should throw and error if not valid. try/catch to handle it.
-            try {
-                const urlObj = new URL(`${baseURL}${linkElement.href}`);
-                urls.push(urlObj.href);
-            } catch (err) {
-                console.log(`Invalid Relative URL: ${err.message}`);
-            }
-        } else {
-            // absolulte URL
-            // URL object should throw and error if not valid. try/catch to handle it.
-            try {
-                const urlObj = new URL(linkElement.href);
-                urls.push(urlObj.href);
-            } catch (err) {
-                console.log(`Invalid Absolute URL: ${err.message}`);
-            }
+        const hrefRaw = linkElement.getAttribute('href');
+        if (!hrefRaw) continue;
+        if (hrefRaw.includes("#")) continue;
+
+        try {
+            const resolved = new URL(hrefRaw, baseURL);
+
+            // filtra apenas http/https
+            if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') continue;
+
+            urls.push(resolved.href);
+        } catch (err) {
+            console.log(`Invalid Absolute URL: ${err.message}`);
         }
     }
     return urls
@@ -84,8 +88,10 @@ function normalizeURL(urlString) {
     return hostPath;
 }
 
+
 module.exports = {
     normalizeURL,
+    // normalizeURLwithBar,
     getURLFromHTML,
     crawlPage,
 }

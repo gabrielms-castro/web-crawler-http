@@ -1,4 +1,4 @@
-const { normalizeURL, getURLFromHTML } = require('./crawl.js')
+const { normalizeURL, getURLFromHTML } = require('../src/crawl.js')
 const { test, expect } = require('@jest/globals')
 
 test(
@@ -41,6 +41,7 @@ test(
     }
 );
 
+
 test(
     'getURLFromHTML',
     () => {
@@ -53,7 +54,7 @@ test(
     </body>
 </html>
 `
-        const inputBaseURL = 'https://blog.boot.dev';
+        const inputBaseURL = 'https://blog.boot.dev/';
         const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/']
         expect(actual).toEqual(expected)
@@ -66,13 +67,13 @@ test(
         const inputHTMLBody = `
 <html>
     <body>
-        <a href="/path/">
+        <a href="path/">
             Boot.dev Blog
         </a>
     </body>
 </html>
 `
-        const inputBaseURL = 'https://blog.boot.dev';
+        const inputBaseURL = 'https://blog.boot.dev/';
         const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/path/']
         expect(actual).toEqual(expected)
@@ -88,34 +89,73 @@ test(
         <a href="https://blog.boot.dev/path1/">
             Boot.dev Blog One
         </a>
-        <a href="/path2/">
+        <a href="path2/">
             Boot.dev Blog Two
         </a>
     </body>
 </html>
 `
-        const inputBaseURL = 'https://blog.boot.dev';
+        const inputBaseURL = 'https://blog.boot.dev/';
         const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
         const expected = ['https://blog.boot.dev/path1/', 'https://blog.boot.dev/path2/']
         expect(actual).toEqual(expected)
     }
 );
 
+
 test(
-    'getURLFromHTML multiple URLs',
+    'getURLFromHTML relative without starting slash',
     () => {
         const inputHTMLBody = `
 <html>
     <body>
-        <a href="Invalid">
-            Invalid
+        <a href="path2/">
+            Boot.dev Blog One
         </a>
     </body>
 </html>
 `
-        const inputBaseURL = 'https://blog.boot.dev';
+        const inputBaseURL = 'https://blog.boot.dev/path/';
         const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
-        const expected = []
+        const expected = ["https://blog.boot.dev/path/path2/"]
+        expect(actual).toEqual(expected)
+    }
+);
+
+test(
+    'getURLFromHTML relative without starting slash complex',
+    () => {
+        const inputHTMLBody = `
+<html>
+    <body>
+        <a href="Alvara/Alvara-quadro.htm">
+            Boot.dev Blog One
+        </a>
+    </body>
+</html>
+`
+        const inputBaseURL = 'https://www.planalto.gov.br/ccivil_03/';
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
+        const expected = ["https://www.planalto.gov.br/ccivil_03/Alvara/Alvara-quadro.htm"]
+        expect(actual).toEqual(expected)
+    }
+);
+
+test(
+    'getURLFromHTML relative without starting slash complex',
+    () => {
+        const inputHTMLBody = `
+<html>
+    <body>
+        <a href="Alvara/Alvara-quadro.htm">
+            Boot.dev Blog One
+        </a>
+    </body>
+</html>
+`
+        const inputBaseURL = 'https://www.planalto.gov.br/ccivil_03/';
+        const actual = getURLFromHTML(inputHTMLBody, inputBaseURL);
+        const expected = ["https://www.planalto.gov.br/ccivil_03/Alvara/Alvara-quadro.htm"]
         expect(actual).toEqual(expected)
     }
 );
