@@ -91,7 +91,6 @@ function normalizeURL(urlString) {
 
 module.exports = {
     normalizeURL,
-    // normalizeURLwithBar,
     getURLFromHTML,
     crawlPage,
 }
