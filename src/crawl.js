@@ -57,7 +57,6 @@ async function crawlPage(baseURL, currentURL, pages, dbClient) {
         console.log(`Error in fetch: ${err}, on page: ${currentURL}`);
     }
 
-
     return pages;
 }
 
@@ -76,7 +75,6 @@ function getURLFromHTML(htmlBody, baseURL) {
         try {
             const resolved = new URL(hrefRaw, baseURL);
 
-            // filtra apenas http/https
             if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') continue;
 
             urls.push(resolved.href);
