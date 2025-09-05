@@ -1,21 +1,27 @@
 const { createClient } = require('@supabase/supabase-js')
 const { dbVariables } = require('./config')
 
-function supabaseclient() {
-    const config = getConfigs(dbVariables);
+function supabaseClient() {
+    const config = getConfigs();
     return createClient(config.supabaseUrl, config.supabaseKey);
 }
 
-function getConfigs(cfg) {
-    if (!cfg.supabaseEndpoint || !cfg.supabaseServiceRole) {
+function getConfigs() {
+    if (!dbVariables.supabaseURL || 
+        !dbVariables.supabaseServiceRole ||
+        !dbVariables.supabaseTable
+    ) {
         throw new Error('Missing Supabase configuration');
     }
+    
     return {
-        supabaseUrl: cfg.supabaseEndpoint,
-        supabaseKey: cfg.supabaseServiceRole
+        supabaseUrl: dbVariables.supabaseURL,
+        supabaseKey: dbVariables.supabaseServiceRole,
+        supabaseTable: dbVariables.supabaseTable
     };
 }
 
 module.exports = {
-    supabaseclient
+    supabaseClient,
+    getConfigs
 }

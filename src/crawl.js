@@ -1,6 +1,7 @@
-const { JSDOM } = require('jsdom')
+const { JSDOM } = require('jsdom');
+const { insertData } = require('./supabase_db/insert_into')
 
-async function crawlPage(baseURL, currentURL, pages) {
+async function crawlPage(baseURL, currentURL, pages, dbClient) {
     const baseURLObj = new URL(baseURL);
     const currentURLObj = new URL(currentURL);
     
@@ -17,13 +18,15 @@ async function crawlPage(baseURL, currentURL, pages) {
 
     console.log(`Crawling: ${currentURL}`);
     
+    let resp;
     try {
-        const resp = await fetch(currentURL,{
+        resp = await fetch(currentURL,{
             method: "GET",
             headers: {
                 "User-Agent": "Mozilla/5.0"
             }
         });
+
         if (resp.status > 399) {
             console.log(`Error in fetch with status code ${resp.status} on page ${currentURL}`);
             return pages; 
@@ -36,17 +39,24 @@ async function crawlPage(baseURL, currentURL, pages) {
         }
 
         const htmlBody = await resp.text();
-        
         const nextURLs = getURLFromHTML(htmlBody, currentURL)
-        
+
+        // persist data into database
+        try {
+            const dbResponse = await insertData(dbClient, { full_url: currentURL })
+            console.log(`${dbResponse.status}: ${dbResponse.statusText}`)
+        } catch (err) {
+            console.log(`${err}`)
+        }    
+
         for (const nextURL of nextURLs) {
-            pages = await crawlPage(baseURL, nextURL, pages);
+            pages = await crawlPage(baseURL, nextURL, pages, dbClient);
         }
 
     } catch (err) {
-        console.log(resp.status)
         console.log(`Error in fetch: ${err}, on page: ${currentURL}`);
     }
+
 
     return pages;
 }

@@ -2,9 +2,11 @@ const dotenv =require('dotenv')
 dotenv.config()
 
 const dbVariables = {
-  supabaseEndpoint: process.env.ENDPOINT,
-  supabaseServiceRole: process.env.SERVICE_ROLE
+  supabaseURL: process.env.SUPABASE_URL,
+  supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE,
+  supabaseTable: process.env.SUPABASE_TABLE
 }
+
 
 module.exports = {
   dbVariables
