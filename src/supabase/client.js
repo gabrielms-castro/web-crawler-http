@@ -36,7 +36,8 @@ export class SupabaseClient {
 let supabaseClient = null
 export function getSupabaseClient() {
   if (!supabaseClient) {
-    supabaseClient = new SupabaseClient();
+    const wrapper = new SupabaseClient();
+    supabaseClient = wrapper.getClient();
   }
   return supabaseClient  
 }
