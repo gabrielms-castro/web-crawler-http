@@ -1,4 +1,4 @@
-function printReport(pages) {
+export function printReport(pages) {
     console.log("====================");
     console.log("REPORT");
     console.log("====================");
@@ -16,7 +16,7 @@ function printReport(pages) {
 
 }
 
-function sortPages(pages) {
+export function sortPages(pages) {
     // each URL maps to how many times that URL shows up as a link on the website
     const pagesArr = Object.entries(pages);
     pagesArr.sort((a, b) => {
@@ -25,9 +25,4 @@ function sortPages(pages) {
         return b[1] - a[1]
     })
     return pagesArr;
-}
-
-module.exports = {
-     sortPages,
-     printReport
 }

@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Basic project for learning HTTP in JavaScript",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "start": "node --no-warnings ./src/main.js",
-    "test": "jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "repository": {
     "type": "git",

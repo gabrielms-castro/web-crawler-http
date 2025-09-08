@@ -1,7 +1,6 @@
-const { JSDOM } = require('jsdom');
-const { insertData } = require('./supabase_db/insert_into')
+import { JSDOM } from 'jsdom'
 
-async function crawlPage(baseURL, currentURL, pages, dbClient) {
+export async function crawlPage(baseURL, currentURL, pages, dbClient) {
     const baseURLObj = new URL(baseURL);
     const currentURLObj = new URL(currentURL);
     
@@ -63,7 +62,7 @@ async function crawlPage(baseURL, currentURL, pages, dbClient) {
     return pages;
 }
 
-function getURLFromHTML(htmlBody, baseURL) {
+export function getURLFromHTML(htmlBody, baseURL) {
     // withBar: if true, return URLs with trailing slash; if false, return URLs without trailing slash
 
     const urls = [];
@@ -88,7 +87,7 @@ function getURLFromHTML(htmlBody, baseURL) {
     return urls
 }
 
-function normalizeURL(urlString) {
+export function normalizeURL(urlString) {
     const urlObj = new URL(urlString);
     const hostPath = `${urlObj.hostname}${urlObj.pathname}`
 
@@ -97,11 +96,4 @@ function normalizeURL(urlString) {
     }
 
     return hostPath;
-}
-
-
-module.exports = {
-    normalizeURL,
-    getURLFromHTML,
-    crawlPage,
 }
