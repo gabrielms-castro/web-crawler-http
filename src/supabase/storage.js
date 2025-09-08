@@ -22,14 +22,18 @@ export class StorageManager {
 
             if (error) throw error;
 
-            const { data: publicURL } = this.supabaseClient.storage
+            const { data: signedData, error: signedError } = await this.supabaseClient.storage
                 .from(bucket)
-                .getPublicUrl(fileName);
+                .createSignedUrl(fileName, 31536000, {
+                    download: fileName,
+                });
+            
+            if (signedError) throw signedError
             
             return {
                 success: true,
                 data,
-                publicUrl: publicURL.publicUrl
+                signedUrl: signedData.signedUrl
             };
         } catch (error) {
             return { success: false, error: error.message };
