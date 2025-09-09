@@ -181,9 +181,18 @@ test(
 )
 
 test(
-    "Normalize File Name with extension",
+    "Normalize File Name with .htm extension",
     () => {
         const input = ' https://www.planalto.gov.br/Portaria/quadro_portaria.htm'
+        const actual = normalizeFileName(input);
+        const expected = 'quadro_portaria.html'
+        expect(actual).toEqual(expected)
+    }
+)
+test(
+    "Normalize File Name with .html extension",
+    () => {
+        const input = ' https://www.planalto.gov.br/Portaria/quadro_portaria.html'
         const actual = normalizeFileName(input);
         const expected = 'quadro_portaria.html'
         expect(actual).toEqual(expected)

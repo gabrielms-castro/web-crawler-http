@@ -23,9 +23,6 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             method: "GET",
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9,pt-BR;q=0.8,pt;q=0.7',
-                'Connection': 'keep-alive'                
             }
         });
 
@@ -40,7 +37,16 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             return pages;
         }
 
-        const htmlBody = await resp.text();
+        const buf = await resp.arrayBuffer();
+        const charset = decodeLatin(buf, contentType)
+
+        let htmlBody;
+        try {
+            htmlBody = new TextDecoder(charset, { fatal: false }).decode(buf);
+        } catch {
+            htmlBody = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+        }        
+
         const nextURLs = getURLFromHTML(htmlBody, currentURL)
         
         // upload HTML file to Supabase Storage
@@ -54,7 +60,7 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
                 "text/html"
             )
             signedUrl = storageResponse.signedUrl
-            console.log(storageResponse)
+            console.log(`Storage Response: ${storageResponse.success}`)
         } catch (err) {
             console.log(`${err}`)
         }
@@ -67,7 +73,7 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
                     sb_storage_link: signedUrl
                 }
             );
-            console.log(dbResponse)
+            console.log(`Database Response: ${dbResponse.success}`)
         } catch (err) {
             console.log(`${err}`)
         }    
@@ -120,9 +126,33 @@ export function normalizeURL(urlString) {
 }
 
 export function normalizeFileName(fileName) {
-    const array = fileName.split("/")
+    const fileExtension = fileName.replace(/(\.htm)$/g, ".html")
+
+    const array = fileExtension.split("/")
     if (array.slice(-1)[0] === "") {
         return array.slice(-2)[0] + ".html"
     }
-    return array.slice(-1).join().replace(".htm", ".html")
+    return array.slice(-1).join()
+}
+
+export async function decodeLatin(buf, contentType) {
+    // took this from AI hehe
+    const decoderLatin = new TextDecoder('windows-1252', { fatal: false });
+    const snippetText = decoderLatin.decode(buf.slice(0, Math.min(buf.byteLength, 8192)));
+
+    const charsetHeaderMatch = contentType.match(/charset=([^;]+)/i);
+    let charset = charsetHeaderMatch ? charsetHeaderMatch[1].trim().toLowerCase() : null;
+
+    if (!charset) {
+        let m = snippetText.match(/<meta\s+charset=["']?([^"'>\s]+)["']?/i);
+        if (m && m[1]) charset = m[1].trim().toLowerCase();
+        if (!charset) {
+            m = snippetText.match(/<meta\s+http-equiv=["']content-type["']\s+content=["'][^"']*charset=([^"'>\s]+)["']/i);
+            if (m && m[1]) charset = m[1].trim().toLowerCase();
+        }
+    }
+
+    if (!charset) charset = 'windows-1252';
+    if (charset === 'iso-8859-1' || charset === 'iso8859-1') charset = 'windows-1252';
+    return charset
 }
