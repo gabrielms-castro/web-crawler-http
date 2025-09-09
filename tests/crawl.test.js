@@ -1,5 +1,5 @@
 import { test, expect } from '@jest/globals'
-import { normalizeURL, getURLFromHTML } from '../src/crawl.js';
+import { normalizeURL, getURLFromHTML, normalizeFileName } from '../src/crawl.js';
 
 test(
     'normalizeURL strip protocol',
@@ -159,3 +159,43 @@ test(
         expect(actual).toEqual(expected)
     }
 );
+
+
+test(
+    "Normalize File Name without extension",
+    () => {
+        const input = 'https://www.planalto.gov.br/ccivil_03/'
+        const actual = normalizeFileName(input);
+        const expected = 'ccivil_03.html'
+        expect(actual).toEqual(expected)
+    }
+)
+test(
+    "Normalize File Name with extension",
+    () => {
+        const input = 'https://www.planalto.gov.br/ccivil_03/L10403.htm'
+        const actual = normalizeFileName(input);
+        const expected = 'L10403.html'
+        expect(actual).toEqual(expected)
+    }
+)
+
+test(
+    "Normalize File Name with extension",
+    () => {
+        const input = ' https://www.planalto.gov.br/Portaria/quadro_portaria.htm'
+        const actual = normalizeFileName(input);
+        const expected = 'quadro_portaria.html'
+        expect(actual).toEqual(expected)
+    }
+)
+
+test(
+    "Normalize File Name without extension and slash",
+    () => {
+        const input = ' https://www.planalto.gov.br/Portaria/'
+        const actual = normalizeFileName(input);
+        const expected = 'Portaria.html'
+        expect(actual).toEqual(expected)
+    }
+)

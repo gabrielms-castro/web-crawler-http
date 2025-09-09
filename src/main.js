@@ -1,5 +1,7 @@
 import { crawlPage } from './crawl.js';
 import { printReport } from './report.js';
+import { DatabaseManager } from './supabase/database.js';
+import { StorageManager } from './supabase/storage.js';
 
 async function main() {
     if (process.argv.length < 3) {

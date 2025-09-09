@@ -14,8 +14,7 @@ describe("StorageManager", () => {
             "text/html",
             true
         );
-        console.log(result)
         expect(result.success).toBe(true);
-        // expect(result.signedUrl).toContain("supabase.co")
+        expect(result.signedUrl).toContain("download=teste.html")
     });
 });

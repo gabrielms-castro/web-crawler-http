@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 
-export async function crawlPage(baseURL, currentURL, pages, dbClient) {
+export async function crawlPage(baseURL, currentURL, pages, database, storage) {
     const baseURLObj = new URL(baseURL);
     const currentURLObj = new URL(currentURL);
     
@@ -42,17 +42,38 @@ export async function crawlPage(baseURL, currentURL, pages, dbClient) {
 
         const htmlBody = await resp.text();
         const nextURLs = getURLFromHTML(htmlBody, currentURL)
-
-        // persist data into database
+        
+        // upload HTML file to Supabase Storage
+        let signedUrl
         try {
-            const dbResponse = await insertData(dbClient, { full_url: currentURL })
-            console.log(`${dbResponse.status}: ${dbResponse.statusText}`)
+            let fileName = await resp.url
+            const storageResponse = await storage.uploadFile(
+                normalizeFileName(fileName),
+                htmlBody,
+                "html-data",
+                "text/html"
+            )
+            signedUrl = storageResponse.signedUrl
+            console.log(storageResponse)
+        } catch (err) {
+            console.log(`${err}`)
+        }
+        
+        // persist data to Supabase Database
+        try {
+            const dbResponse = await database.insert(
+                "urls_metadata", {
+                    url: currentURL,
+                    sb_storage_link: signedUrl
+                }
+            );
+            console.log(dbResponse)
         } catch (err) {
             console.log(`${err}`)
         }    
 
         for (const nextURL of nextURLs) {
-            pages = await crawlPage(baseURL, nextURL, pages, dbClient);
+            pages = await crawlPage(baseURL, nextURL, pages, database, storage) 
         }
 
     } catch (err) {
@@ -96,4 +117,12 @@ export function normalizeURL(urlString) {
     }
 
     return hostPath;
+}
+
+export function normalizeFileName(fileName) {
+    const array = fileName.split("/")
+    if (array.slice(-1)[0] === "") {
+        return array.slice(-2)[0] + ".html"
+    }
+    return array.slice(-1).join().replace(".htm", ".html")
 }

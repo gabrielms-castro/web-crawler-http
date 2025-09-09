@@ -13,7 +13,9 @@ export class DatabaseManager {
                 .insert(record)
 
             if (error) throw error;
+
             return { success: true, data };
+
         } catch (error) {
             return { success: false, error: error.message };
         }
