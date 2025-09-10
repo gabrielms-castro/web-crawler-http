@@ -1,5 +1,5 @@
 import { test, expect } from '@jest/globals'
-import { normalizeURL, getURLFromHTML, normalizeFileName } from '../src/crawl.js';
+import { normalizeURL, getURLFromHTML, normalizeFileName,getCharmapFromHTML} from '../src/crawl.js';
 
 test(
     'normalizeURL strip protocol',
@@ -205,6 +205,26 @@ test(
         const input = ' https://www.planalto.gov.br/Portaria/'
         const actual = normalizeFileName(input);
         const expected = 'Portaria.html'
+        expect(actual).toEqual(expected)
+    }
+)
+test(
+    "Get charmap from <head>",
+    () => {
+        const input = `
+<head>
+  <meta content="PORTARIA No 1.492 DE 5/10/2011. http://www.planalto.gov.br/ccivil_03/Portaria/P1492-11-ccivil.htm" name="Copyright">
+  <meta content="pt-br" http-equiv="Content-Language">
+  <meta content="text/html; charset=iso8859-1" http-equiv="Content-Type">
+  <meta charset="iso8859-1">
+  <link href="../../../css/legis_3.css" rel="stylesheet" type="text/css">
+  <script src="../../../js/includeHTML.js">
+  </script>
+  <meta content="Package: 'incolumepy.saj_projects', Version: '2020.5.0-dev34', URL oficial: https://pypi.org/project/incolumepy.saj-projects" name="generator">
+ </head>
+`
+        const actual = getCharmapFromHTML(input);
+        const expected = 'iso8859-1'
         expect(actual).toEqual(expected)
     }
 )

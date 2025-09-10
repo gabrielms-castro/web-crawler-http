@@ -1,4 +1,6 @@
 import { JSDOM } from 'jsdom'
+import iconv from "iconv-lite";
+import chardet from "chardet";
 
 export async function crawlPage(baseURL, currentURL, pages, database, storage) {
     const baseURLObj = new URL(baseURL);
@@ -22,7 +24,7 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
         resp = await fetch(currentURL,{
             method: "GET",
             headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0",
             }
         });
 
@@ -36,18 +38,14 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             console.log(`Non HTML response. Content-Type: ${contentType}, on page: ${currentURL}`);
             return pages;
         }
+        
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        let charset = chardet.detect(buffer) || getCharmapFromHTML(buffer.toString());
+        const fixedHTMLEncoding = iconv.decode(buffer, charset);
+        const normalizedText = normalizeText(fixedHTMLEncoding);
 
-        const buf = await resp.arrayBuffer();
-        const charset = decodeLatin(buf, contentType)
-
-        let htmlBody;
-        try {
-            htmlBody = new TextDecoder(charset, { fatal: false }).decode(buf);
-        } catch {
-            htmlBody = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-        }        
-
-        const nextURLs = getURLFromHTML(htmlBody, currentURL)
+        // const htmlBody = await resp.text()
+        const nextURLs = getURLFromHTML(normalizedText, currentURL)
         
         // upload HTML file to Supabase Storage
         let signedUrl
@@ -55,7 +53,7 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             let fileName = await resp.url
             const storageResponse = await storage.uploadFile(
                 normalizeFileName(fileName),
-                htmlBody,
+                normalizedText,
                 "html-data",
                 "text/html"
             )
@@ -135,24 +133,19 @@ export function normalizeFileName(fileName) {
     return array.slice(-1).join()
 }
 
-export async function decodeLatin(buf, contentType) {
-    // took this from AI hehe
-    const decoderLatin = new TextDecoder('windows-1252', { fatal: false });
-    const snippetText = decoderLatin.decode(buf.slice(0, Math.min(buf.byteLength, 8192)));
+export function normalizeText(text) {
+  return text.normalize("NFKD");
+}
 
-    const charsetHeaderMatch = contentType.match(/charset=([^;]+)/i);
-    let charset = charsetHeaderMatch ? charsetHeaderMatch[1].trim().toLowerCase() : null;
-
-    if (!charset) {
-        let m = snippetText.match(/<meta\s+charset=["']?([^"'>\s]+)["']?/i);
-        if (m && m[1]) charset = m[1].trim().toLowerCase();
-        if (!charset) {
-            m = snippetText.match(/<meta\s+http-equiv=["']content-type["']\s+content=["'][^"']*charset=([^"'>\s]+)["']/i);
-            if (m && m[1]) charset = m[1].trim().toLowerCase();
-        }
+export function getCharmapFromHTML(htmlBody) {
+    const dom = new JSDOM(htmlBody)
+    const metasContent = dom.window.document.querySelectorAll('meta')
+    let charset;
+    for (const meta of metasContent) {
+        charset = meta.getAttribute('charset')
+        if (!charset) continue;
+        return charset
+        
     }
 
-    if (!charset) charset = 'windows-1252';
-    if (charset === 'iso-8859-1' || charset === 'iso8859-1') charset = 'windows-1252';
-    return charset
 }
