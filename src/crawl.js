@@ -40,23 +40,30 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             return pages;
         }
         
+        // clean and get text from HTML
         const buffer = Buffer.from(await resp.arrayBuffer());
-        let charset = chardet.detect(buffer) || getCharmapFromHTML(buffer.toString());
+        const charset = chardet.detect(buffer) || getCharmapFromHTML(buffer.toString());
         const fixedHTMLEncoding = iconv.decode(buffer, charset);
         const normalizedText = normalizeText(fixedHTMLEncoding);
+        const normalizedTextContent = getTextFromHTML(normalizedText)
 
         // const htmlBody = await resp.text()
         const nextURLs = getURLFromHTML(normalizedText, currentURL)
         
         // upload HTML file to Supabase Storage
+        let fileName = await resp.url
+        
+        // clean file name
+        const normalizedFileName = normalizeFileName(fileName)
+        
+        
         let signedUrl
         try {
-            let fileName = await resp.url
             const storageResponse = await storage.uploadFile(
-                normalizeFileName(fileName),
-                getTextFromHTML(normalizedText),
+                normalizedFileName,
+                normalizedTextContent,
                 "html-data",
-                "text/html"
+                "text/plain"
             )
             signedUrl = storageResponse.signedUrl
             console.log(`Storage Response: ${storageResponse.success}`)
@@ -125,11 +132,11 @@ export function normalizeURL(urlString) {
 }
 
 export function normalizeFileName(fileName) {
-    const fileExtension = fileName.replace(/(\.htm)$/g, ".html")
+    const fileExtension = fileName.replace(/(\.htm)$/g, ".txt")
 
     const array = fileExtension.split("/")
     if (array.slice(-1)[0] === "") {
-        return array.slice(-2)[0] + ".html"
+        return array.slice(-2)[0] + ".txt"
     }
     return array.slice(-1).join()
 }
@@ -146,7 +153,5 @@ export function getCharmapFromHTML(htmlBody) {
         charset = meta.getAttribute('charset')
         if (!charset) continue;
         return charset
-        
     }
-
 }

@@ -1,8 +1,8 @@
 import { JSDOM } from 'jsdom'
 
 export function getTextFromHTML(htmlBody) {
-    const dom = new JSDOM(htmlBody)
-
+    const stripedHTML = stripScriptsFromHTML(htmlBody)
+    const dom = new JSDOM(stripedHTML)
     const text = dom.window.document.querySelector('html').textContent.trim()
     return text.replace(/\s+/g, " ")
 }
@@ -20,3 +20,4 @@ export function stripScriptsFromHTML(htmlBody) {
     }
     return dom.serialize()
 }
+
