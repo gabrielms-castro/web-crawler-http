@@ -9,7 +9,7 @@ describe("DatabaseManager", () => {
 
     it("Insert a single record", async () => {
         const result = await db.insert("urls_metadata", {
-            url: "https://jest-test.com",
+            url: `https://jest-test${Math.random()}.com`,
         });
 
     expect(result.success).toBe(true);
