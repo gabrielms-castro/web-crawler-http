@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom'
 import iconv from "iconv-lite";
 import chardet from "chardet";
+import { getTextFromHTML } from './parser.js';
 
 export async function crawlPage(baseURL, currentURL, pages, database, storage) {
     const baseURLObj = new URL(baseURL);
@@ -53,7 +54,7 @@ export async function crawlPage(baseURL, currentURL, pages, database, storage) {
             let fileName = await resp.url
             const storageResponse = await storage.uploadFile(
                 normalizeFileName(fileName),
-                normalizedText,
+                getTextFromHTML(normalizedText),
                 "html-data",
                 "text/html"
             )

@@ -1,5 +1,5 @@
 import { test, expect } from '@jest/globals'
-import { getTextFromHTML} from '../src/parser.js';
+import { getTextFromHTML, stripScriptsFromHTML } from '../src/parser.js';
 
 test(
     "Get text from HTML",
@@ -32,7 +32,33 @@ test (
 </html>`;
         const actual = await getTextFromHTML(input);
         const expected = `Lorem Ipsum Unit Test Page Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean commodo ligula eget dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; In hac habitasse platea dictumst. Nulla facilisi. Click Me to Trigger Event Submit Form This is a long test article containing repeated words, keywords like TESTING, MOCK, SAMPLE, and EDGECASE. Use this block for string searches, regex parsing, and text extraction validations in your tests. Alice Ipsum Longword Generator ContentBob Placeholder String for Assertions Hidden Debug Text with Special Characters !@#$%^&*`;
-        console.log(actual)
+        expect(actual).toEqual(expected)
+    }
+)
+
+test(
+    "strip script from HTML",
+    () => {
+        const input = `
+<html>
+ <head>
+  <meta content="text/html; charset=utf-8">
+ </head>
+   <body>
+    <p>test</p>
+  </body>
+ <script> console.log() </script>
+</html>`
+        const actual = stripScriptsFromHTML(input);
+        const expected = `
+<html>
+ <head>
+  <meta content="text/html; charset=utf-8">
+ </head>
+   <body>
+    <p>test</p>
+  </body>
+</html>`
         expect(actual).toEqual(expected)
     }
 )
