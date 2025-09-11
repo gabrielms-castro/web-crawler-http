@@ -132,7 +132,7 @@ export function normalizeURL(urlString) {
 }
 
 export function normalizeFileName(fileName) {
-    const fileExtension = fileName.replace(/(\.htm)$/g, ".txt")
+    const fileExtension = fileName.replace(/(\.htm|\.html)$/g, ".txt")
 
     const array = fileExtension.split("/")
     if (array.slice(-1)[0] === "") {

@@ -166,7 +166,7 @@ test(
     () => {
         const input = 'https://www.planalto.gov.br/ccivil_03/'
         const actual = normalizeFileName(input);
-        const expected = 'ccivil_03.html'
+        const expected = 'ccivil_03.txt'
         expect(actual).toEqual(expected)
     }
 )
@@ -175,7 +175,7 @@ test(
     () => {
         const input = 'https://www.planalto.gov.br/ccivil_03/L10403.htm'
         const actual = normalizeFileName(input);
-        const expected = 'L10403.html'
+        const expected = 'L10403.txt'
         expect(actual).toEqual(expected)
     }
 )
@@ -185,16 +185,16 @@ test(
     () => {
         const input = ' https://www.planalto.gov.br/Portaria/quadro_portaria.htm'
         const actual = normalizeFileName(input);
-        const expected = 'quadro_portaria.html'
+        const expected = 'quadro_portaria.txt'
         expect(actual).toEqual(expected)
     }
 )
 test(
     "Normalize File Name with .html extension",
     () => {
-        const input = ' https://www.planalto.gov.br/Portaria/quadro_portaria.html'
+        const input = 'https://www.planalto.gov.br/Portaria/quadro_portaria.html'
         const actual = normalizeFileName(input);
-        const expected = 'quadro_portaria.html'
+        const expected = 'quadro_portaria.txt'
         expect(actual).toEqual(expected)
     }
 )
@@ -204,7 +204,7 @@ test(
     () => {
         const input = ' https://www.planalto.gov.br/Portaria/'
         const actual = normalizeFileName(input);
-        const expected = 'Portaria.html'
+        const expected = 'Portaria.txt'
         expect(actual).toEqual(expected)
     }
 )

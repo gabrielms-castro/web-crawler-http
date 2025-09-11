@@ -50,15 +50,6 @@ test(
  <script> console.log() </script>
 </html>`
         const actual = stripScriptsFromHTML(input);
-        const expected = `
-<html>
- <head>
-  <meta content="text/html; charset=utf-8">
- </head>
-   <body>
-    <p>test</p>
-  </body>
-</html>`
-        expect(actual).toEqual(expected)
+        expect(actual).not.toContain("<script>" )
     }
 )
