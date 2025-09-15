@@ -2,6 +2,7 @@ import { JSDOM } from 'jsdom'
 import iconv from "iconv-lite";
 import chardet from "chardet";
 import { getTextFromHTML } from './parser.js';
+import { ignore } from './configs/config.js';
 
 export async function crawlPage(baseURL, currentURL, pages, database, storage) {
     const baseURLObj = new URL(baseURL);
@@ -106,6 +107,10 @@ export function getURLFromHTML(htmlBody, baseURL) {
         const hrefRaw = linkElement.getAttribute('href');
         if (!hrefRaw) continue;
         if (hrefRaw.includes("#")) continue;
+        if (hrefRaw.includes(".doc")) continue;
+        if (hrefRaw.includes(".mp4")) continue;
+        if (hrefRaw.includes(".pdf")) continue;
+        if (ignore.has(hrefRaw)) continue;
 
         try {
             const resolved = new URL(hrefRaw, baseURL);
