@@ -22,14 +22,3 @@ export function normalizeFileName(fileName) {
 export function normalizeText(text) {
   return text.normalize("NFKD");
 }
-
-export function getCharmapFromHTML(htmlBody) {
-    const dom = new JSDOM(htmlBody)
-    const metasContent = dom.window.document.querySelectorAll('meta')
-    let charset;
-    for (const meta of metasContent) {
-        charset = meta.getAttribute('charset')
-        if (!charset) continue;
-        return charset
-    }
-}

@@ -1,7 +1,10 @@
 import amqp from 'amqplib';
+import dotenv from 'dotenv'
+
 import { crawlSiteAsync } from './worker/crawler.js';
 import { printReport } from './report.js';
 
+dotenv.config()
 
 async function main() {
     if (process.argv.length < 5) {
@@ -16,20 +19,21 @@ async function main() {
         console.log("Too many arguments provided");
         process.exit(1);
     }
-    const rabbitConnString = process.env.RABBITMQ_CONNECTION;
-    const rabbitConnection = await amqp.connect(rabbitConnString);
-    const rabbitChannel = await rabbitConnection.createConfirmChannel();
+    
+    // const rabbitConnString = process.env.RABBITMQ_CONNECTION;
+    // const rabbitConnection = await amqp.connect(rabbitConnString);
+    // const rabbitChannel = await rabbitConnection.createConfirmChannel();
 
-    ["SIGINT", "SIGTERM"].forEach((signal) => {
-        process.on(signal, async () => {
-            try {
-                await rabbitConnection.close();
-                console.log("[INFO] RabbitMQ connection closed");
-            } finally {
-                process.exit(0);
-            }
-        });
-    }) ;
+    // ["SIGINT", "SIGTERM"].forEach((signal) => {
+    //     process.on(signal, async () => {
+    //         try {
+    //             await rabbitConnection.close();
+    //             console.log("[INFO] RabbitMQ connection closed");
+    //         } finally {
+    //             process.exit(0);
+    //         }
+    //     });
+    // }) ;
 
 
     const baseURL = process.argv[2];

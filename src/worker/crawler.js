@@ -1,8 +1,10 @@
 import pLimit from "p-limit";
 
-import { JSDOM } from 'jsdom'
 import { normalizeURL } from "../utils/normalizers.js";
-import { ignorePaths } from "../configs/config.js";
+import { normalizeText, normalizeFileName } from "../utils/normalizers.js";
+import { getTextFromHTML, getURLFromHTML } from "../utils/parser.js";
+import { DatabaseManager } from "../supabase/database.js";
+import { StorageManager } from "../supabase/storage.js";
 
 class ConcurrentCrawler {
     #baseURL;
@@ -11,8 +13,10 @@ class ConcurrentCrawler {
     #maxPages;
     #shouldStop = false;
     #allTasks = new Set();
-    #abortController = new AbortController();
     #visited = new Set();
+    #abortController = new AbortController();
+    #database = new DatabaseManager();
+    #storage = new StorageManager();
 
     constructor(baseURL, maxConcurrency, maxPages=100) {
         this.#baseURL = baseURL;
@@ -45,35 +49,6 @@ class ConcurrentCrawler {
         return true;
     }
 
-    #getURLFromHTML(htmlBody, baseURL) {
-        // withBar: if true, return URLs with trailing slash; if false, return URLs without trailing slash
-
-        const urls = [];
-        const dom = new JSDOM(htmlBody);
-        const linkElements = dom.window.document.querySelectorAll('a');
-        
-        for (const linkElement of linkElements) {
-            const hrefRaw = linkElement.getAttribute('href');
-            if (!hrefRaw) continue;
-            if (hrefRaw.includes("#")) continue;
-            if (hrefRaw.includes(".doc")) continue;
-            if (hrefRaw.includes(".mp4")) continue;
-            if (hrefRaw.includes(".pdf")) continue;
-            if (ignorePaths.has(hrefRaw)) continue;
-
-            try {
-                const resolved = new URL(hrefRaw, baseURL);
-
-                if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') continue;
-
-                urls.push(resolved.href);
-            } catch (err) {
-                console.log(`Invalid Absolute URL: ${err.message}`);
-            }
-        }
-        return urls
-    }  
-
     async #getHTML(currentURL) {
         const { signal } = this.#abortController;
 
@@ -103,7 +78,12 @@ class ConcurrentCrawler {
                 throw new Error(`Got non-HTML response: ${contentType} - URL: ${currentURL}`);
             }
 
-            return res.text();
+            const html = await res.text();
+
+            return {
+                html,
+                resURL: res.url
+            }
         });
     }
 
@@ -124,18 +104,50 @@ class ConcurrentCrawler {
         }
 
         console.log(`[INFO] Crawling: ${currentURL}`);
-        let html = "";
+        let html, resURL;
         try {
-            html = await this.#getHTML(currentURL);
+            ({ html, resURL } = await this.#getHTML(currentURL));
         } catch (err) {
             console.log(`[ERROR] ${err.message}`);
             return;
         }
+
         if (html.toLowerCase().includes("art. 1")) return;
         if (this.#shouldStop) return;
 
-        const nextURLs = this.#getURLFromHTML(html, currentURL)
         
+        const nextURLs = getURLFromHTML(html, currentURL)
+       
+        // clean file name
+        const normalizedFileName = normalizeFileName(resURL)
+
+        let signedUrl;
+        try {
+            const storageResponse = await this.#storage.uploadFile(
+                normalizedFileName,
+                html,
+                "html-data",
+                "text/html"
+            )
+            signedUrl = storageResponse.signedUrl
+            console.log(`[INFO] Storage Response: ${currentURL} - ${storageResponse.success ? "Success" : "Failed"}`)
+        } catch (err) {
+            throw new Error(`Storage error: ${err.message}`);
+        }  
+        
+        // persist data to Supabase Database
+        try {
+            const dbResponse = await this.#database.insert(
+                "urls_metadata", {
+                    url: currentURL,
+                    sb_storage_link: signedUrl
+                }
+            );
+            console.log(`[INFO] Database Response: ${currentURL} - ${dbResponse.success ? "Success" : "Failed"}`)
+        } catch (err) {
+            throw new Error(`Database error: ${err.message}`);
+        }            
+
         const crawlPromises = [];
 
         for (const nextURL of nextURLs) {
@@ -157,7 +169,7 @@ class ConcurrentCrawler {
         } finally {
             this.#allTasks.delete(rootTask);
         }
-
+ 
         await Promise.allSettled(Array.from(this.#allTasks));
         
         //debug
