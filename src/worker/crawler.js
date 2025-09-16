@@ -87,7 +87,7 @@ class ConcurrentCrawler {
         });
     }
 
-    async #crawlPage(currentURL) {
+    async #crawlPage(currentURL, depth=0) {
         if (this.#shouldStop) return;
 
         const currentURLObj = new URL(currentURL);
@@ -103,7 +103,7 @@ class ConcurrentCrawler {
             return
         }
 
-        console.log(`[INFO] Crawling: ${currentURL}`);
+        console.log(`[INFO] Crawling (depth=${depth}): ${currentURL}`);
         let html, resURL;
         try {
             ({ html, resURL } = await this.#getHTML(currentURL));
@@ -140,10 +140,11 @@ class ConcurrentCrawler {
             const dbResponse = await this.#database.insert(
                 "urls_metadata", {
                     url: currentURL,
-                    sb_storage_link: signedUrl
+                    sb_storage_link: signedUrl,
+                    depth: depth,
                 }
             );
-            console.log(`[INFO] Database Response: ${currentURL} - ${dbResponse.success ? "Success" : "Failed"}`)
+            console.log(`[INFO] Database Response: depth=${depth} - ${currentURL} - ${dbResponse.success ? "Success" : "Failed"}`)
         } catch (err) {
             throw new Error(`Database error: ${err.message}`);
         }            
@@ -153,7 +154,7 @@ class ConcurrentCrawler {
         for (const nextURL of nextURLs) {
             if (this.#shouldStop) break;
 
-            const task = this.#crawlPage(nextURL)
+            const task = this.#crawlPage(nextURL, depth + 1);
             this.#allTasks.add(task);
             task.finally(() => this.#allTasks.delete(task));
             crawlPromises.push(task);
