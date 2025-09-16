@@ -1,8 +1,7 @@
-import { crawlSiteAsync } from './concurrency.js';
-import { crawlPage } from './crawl.js';
+import amqp from 'amqplib';
+import { crawlSiteAsync } from './worker/crawler.js';
 import { printReport } from './report.js';
-import { DatabaseManager } from './supabase/database.js';
-import { StorageManager } from './supabase/storage.js';
+
 
 async function main() {
     if (process.argv.length < 5) {
@@ -17,6 +16,21 @@ async function main() {
         console.log("Too many arguments provided");
         process.exit(1);
     }
+    const rabbitConnString = process.env.RABBITMQ_CONNECTION;
+    const rabbitConnection = await amqp.connect(rabbitConnString);
+    const rabbitChannel = await rabbitConnection.createConfirmChannel();
+
+    ["SIGINT", "SIGTERM"].forEach((signal) => {
+        process.on(signal, async () => {
+            try {
+                await rabbitConnection.close();
+                console.log("[INFO] RabbitMQ connection closed");
+            } finally {
+                process.exit(0);
+            }
+        });
+    }) ;
+
 
     const baseURL = process.argv[2];
     const maxConcurrency = Number(process.argv[3]);
@@ -46,6 +60,7 @@ async function main() {
 // const storage = new StorageManager();
 // const pages = await crawlPage(baseURL, baseURL, {}, database, storage) //1st baseURL is the starting point, 2nd is the current URL, {} is a new empty object to hold the pages
     
-
-
-main();
+main().catch((err) => {
+  console.error("Fatal error:", err);
+  process.exit(1);
+});

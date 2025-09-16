@@ -1,5 +1,8 @@
 import pLimit from "p-limit";
-import { normalizeURL, getURLFromHTML } from "./crawl.js";
+
+import { JSDOM } from 'jsdom'
+import { normalizeURL } from "../utils/normalizers.js";
+import { ignorePaths } from "../configs/config.js";
 
 class ConcurrentCrawler {
     #baseURL;
@@ -41,6 +44,35 @@ class ConcurrentCrawler {
         this.#visited.add(normalizedURL)
         return true;
     }
+
+    #getURLFromHTML(htmlBody, baseURL) {
+        // withBar: if true, return URLs with trailing slash; if false, return URLs without trailing slash
+
+        const urls = [];
+        const dom = new JSDOM(htmlBody);
+        const linkElements = dom.window.document.querySelectorAll('a');
+        
+        for (const linkElement of linkElements) {
+            const hrefRaw = linkElement.getAttribute('href');
+            if (!hrefRaw) continue;
+            if (hrefRaw.includes("#")) continue;
+            if (hrefRaw.includes(".doc")) continue;
+            if (hrefRaw.includes(".mp4")) continue;
+            if (hrefRaw.includes(".pdf")) continue;
+            if (ignorePaths.has(hrefRaw)) continue;
+
+            try {
+                const resolved = new URL(hrefRaw, baseURL);
+
+                if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') continue;
+
+                urls.push(resolved.href);
+            } catch (err) {
+                console.log(`Invalid Absolute URL: ${err.message}`);
+            }
+        }
+        return urls
+    }  
 
     async #getHTML(currentURL) {
         const { signal } = this.#abortController;
@@ -102,7 +134,7 @@ class ConcurrentCrawler {
         if (html.toLowerCase().includes("art. 1")) return;
         if (this.#shouldStop) return;
 
-        const nextURLs = getURLFromHTML(html, currentURL)
+        const nextURLs = this.#getURLFromHTML(html, currentURL)
         
         const crawlPromises = [];
 
@@ -133,7 +165,7 @@ class ConcurrentCrawler {
         console.log(`[DEBUG] Visited ${this.#visited.size} pages.`);
 
         return this.#pages;
-}
+    }  
 }
 
 export async function crawlSiteAsync(baseURL, maxConcurrency = 5, maxPages=100) {

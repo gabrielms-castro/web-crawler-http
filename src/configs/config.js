@@ -1,4 +1,4 @@
-export const ignore = new Set([
+export const ignorePaths = new Set([
     "../../../Resenha/Principal_ano.htm",
     "VETO_TOTAL/principal_ano.htm",
     "Projetos/Quadros/principal.htm",
